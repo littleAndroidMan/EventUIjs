@@ -6426,7 +6426,7 @@ EVUI.Modules.Binding.BindingController = function (services)
         var handle = new BindingDispatchHandle();
         handle.handler = fn;
         handle.id = _dispatchIDCounter;
-        handle.binding = session.bindingHandle;
+        handle.binding = session.bindingHandle.binding;
         handle.path = boundProperty.path;
         handle.hashKey = hashKey;
         handle.invocationHandle = function (eventArgs)
@@ -6450,22 +6450,22 @@ EVUI.Modules.Binding.BindingController = function (services)
 
                 if (lastDotIndex === -1)
                 {
-                    owningObject = handle.binding.currentState.source;
+                    owningObject = handle.binding.source;
                 }
                 else
                 {
                     var objPath = normalized.substring(0, lastDotIndex);
-                    owningObject = EVUI.Modules.Core.Utils.getValue(objPath, handle.binding.currentState.source);
+                    owningObject = EVUI.Modules.Core.Utils.getValue(objPath, handle.binding.source);
                 }
 
                 //couldn't find the object, fall back to the window
                 if (owningObject == null) owningObject = window;
 
-                return handle.handler.call(owningObject, eventArgs, handle.binding.binding);
+                return handle.handler.call(owningObject, eventArgs, handle.binding);
             }
             else if (handle.binding.options.eventContextMode === EVUI.Modules.Binding.BoundEventContextMode.Element)
             {
-                return handle.handler.call(eventArgs.currentTarget, eventArgs, handle.binding.binding);
+                return handle.handler.call(eventArgs.currentTarget, eventArgs, handle.binding);
             }
             else
             {
