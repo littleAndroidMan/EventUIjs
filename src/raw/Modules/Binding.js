@@ -2103,42 +2103,7 @@ EVUI.Modules.Binding.BindingController = function (services)
                     }
                 }
             }
-        }
-        else if (bindingMode === EVUI.Modules.Binding.BindingMode.Overwrite) //overwriting existing content. Since this is a recursive setting, the children will have taken care of updating their own nodes and we just have to worry about the parent nodes.
-        {
-            if (session.isArray === true) //arrays never are injected directly but are rather a wrapper for their children, so we have nothing to do for the actual array. Just make sure its boundContent list is correct and the children's relationships to each other is correct.
-            {
-                session.bindingHandle.currentState.boundContent = reAssignArrayElementReferences2(session);
-            }
-            else //we have an object to inject that is not an array, add it's contents to the DOM.
-            {
-                //if the old state was bound and we have children, we need to do another merge - this is because the children are already merged into the DOM and simply removing the old content and inserting the current content will disconnect all the children.
-                if (session.bindingHandle.oldStateBound === true && session.bindingHandle.currentState.childBindingHandles.length > 0)
-                {
-                    mergeContent(session);
-                }
-                else
-                {
-                    //if the bound htmlContent fragment has never been created, we need to make it now to inject the whole set of DOM nodes at once.
-                    if (session.bindingHandle.currentState.boundContentFragment == null) session.bindingHandle.currentState.boundContentFragment = session.bindingHandle.currentState.boundContentTree.toNode();
-
-                    //grab the child node references BEFORE insertion since the document fragment will be empty once its children are in the DOM.
-                    var nodeChildren = getNodeListFromFragment(session.bindingHandle.currentState.boundContentFragment);
-
-                    //if we have no element reference (this is usually the case with a child binding that is an array member), insert the child into the content tree and give it a reference element.
-                    if (session.bindingHandle.currentState.element == null)
-                    {
-                        insertMissingNode2(session, session.bindingHandle.currentState.boundContentFragment);
-                    }
-                    else //otherwise, just inject the content as it would be normall.y
-                    {
-                        injectNode(session, insertionMode, session.bindingHandle.currentState.element, session.bindingHandle.currentState.boundContentFragment);
-                    }
-
-                    session.bindingHandle.currentState.boundContent = nodeChildren;
-                }
-            }
-        }
+        }        
         else //garbage input, crash.
         {
             throw Error("Unrecognized bindingMode: \"" + bindingMode + "\".");
@@ -2804,15 +2769,7 @@ EVUI.Modules.Binding.BindingController = function (services)
         if (aType === "string" && bType === "string") //replacing string contents
         {
             var parentNode = getParentNodeDiff(session, treeDiff);
-
-            if (session.bindingHandle.binding.bindingMode === EVUI.Modules.Binding.BindingMode.Overwrite) //overwriting, replace the text node
-            {
-                parent.a.node.replaceWith(toDomNode(parentNode.b, session.bindingHandle)); //parentNode.b.toNode());
-            }
-            else //otherwise just update it's text content
-            {
-                parentNode.a.node.textContent = parentNode.b.content;
-            }
+            parentNode.a.node.textContent = parentNode.b.content;            
         }
         else if (aType === "string" || bType === "string") //either replacing a string node with an element or vice-versa
         {
@@ -2936,23 +2893,11 @@ EVUI.Modules.Binding.BindingController = function (services)
                 if (tagDiff != null && contentDiff != null && attributeDiff != null && shadowDiff != null) break;
             }
 
-            if (tagDiff != null || session.bindingHandle.binding.insertionMode === EVUI.Modules.Binding.BindingMode.Overwrite) //tags are different, they have to be different elements or we are overwriting the old content with new content explicitly
+            if (tagDiff != null) //tags are different, they have to be different elements or we are overwriting the old content with new content explicitly
             {
                 var aTarget = treeDiff.a.node;
                 var bTarget = toDomNode(treeDiff.b, session.bindingHandle); //.toNode();
                 aTarget.replaceWith(bTarget);
-
-                if (session.bindingHandle.binding.insertionMode === EVUI.Modules.Binding.BindingMode.Overwrite && contentDiff != null && session.bindingHandle.currentState.childBindingHandles.length > 0) //if we're overwriting it's possible to have children that were already merged, so attempt to merge in the existing content under this one
-                {
-                    if (contentDiff.differences.length === 0 || contentDiff.diffType === EVUI.Modules.Diff.DiffType.String)
-                    {
-                        processTreeDiff(session, diffResult, contentDiff, 0);
-                    }
-                    else
-                    {
-                        processArrayDiff(session, diffResult, contentDiff, 0);
-                    }
-                }
             }
             else //tags the same, we just update the child contents.
             {
@@ -5746,10 +5691,6 @@ EVUI.Modules.Binding.BindingController = function (services)
             {
                 attributeTemplate.bindingMode = EVUI.Modules.Binding.BindingMode.Merge;
             }
-            else if (mode.indexOf(EVUI.Modules.Binding.BindingMode.Overwrite) !== -1)
-            {
-                attributeTemplate.bindingMode = EVUI.Modules.Binding.BindingMode.Overwrite;
-            }
         }
 
         if (EVUI.Modules.Core.Utils.stringIsNullOrWhitespace(key) === false)
@@ -8145,9 +8086,7 @@ EVUI.Modules.Binding.BinderEventArgs = function (bindSession)
 EVUI.Modules.Binding.BindingMode =
 {
     /**The new or changed content from the Binding will be merged with the existing DOM contents.*/
-    Merge: "merge",
-    /**The old content from the Binding will be removed and replaced with the new content.*/
-    Overwrite: "overwrite"
+    Merge: "merge"
 };
 
 Object.freeze(EVUI.Modules.Binding.BindingMode);
