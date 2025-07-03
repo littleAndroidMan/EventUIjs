@@ -1609,6 +1609,7 @@ EVUI.Modules.Core.Utils.isjQuery = function (object)
 @returns {Boolean}*/
 EVUI.Modules.Core.Utils.isElement = function (object)
 {
+    if (object?.nodeType === Node.ELEMENT_NODE) return true;
     return object instanceof Element;
 };
 

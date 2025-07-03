@@ -2030,6 +2030,13 @@ EVUI.Modules.Binding.BindingController = function (services)
     {
         var insertionMode = session.bindingHandle.binding.insertionMode;
         var bindingMode = session.bindingHandle.binding.bindingMode;
+        var contentMoved = false;
+
+        if (session.bindingHandle.oldStateBound === true)
+        {
+            //if the element changed, move the top-level content to be relative to the new element
+            contentMoved = moveBoundContent(session);
+        }
 
         if (bindingMode === EVUI.Modules.Binding.BindingMode.Merge) //if merging content, we will attempt to preserve any DOM nodes possible
         {
@@ -2039,7 +2046,8 @@ EVUI.Modules.Binding.BindingController = function (services)
                 {
                     mergeContent(session);
 
-                    if (EVUI.Modules.Core.Utils.isOrphanedNode(session.bindingHandle.oldState.element) === false)
+                    //if we didn't move it and our old element is good, assign it to the current state
+                    if (contentMoved !== true && EVUI.Modules.Core.Utils.isOrphanedNode(session.bindingHandle.oldState.element) === false)
                     {
                         session.bindingHandle.currentState.element = session.bindingHandle.oldState.element;
                     }
@@ -2161,6 +2169,45 @@ EVUI.Modules.Binding.BindingController = function (services)
                 throw Error("Invalid insertionMode: \"" + insertionMode + "\"");
         }
     };
+
+    /**Moves a Binding's previously bound content to a new position in the DOM relative to a different element.
+    @param {BindingSession} session The BindingSession being executed.
+    @returns {Boolean}*/
+    var moveBoundContent = function (session)
+    {
+        //moving bound content only applies to a top-level Binding
+        if (session.bindingHandle.currentState.parentBindingHandle != null) return false;
+
+        //no content to move
+        if (session.bindingHandle.oldState.boundContent != null && session.bindingHandle.oldState.boundContent.length === 0) return false;  
+
+        //resolve elements if wrapped in a jQuery or DomHelper
+        var oldElement = getValidElement(session.bindingHandle.oldState?.element);
+        var currentElement = getValidElement(session.bindingHandle.currentState.element);
+
+        //resolve CSS selectors if they were used
+        if (typeof oldElement === "string") oldElement = new EVUI.Modules.Dom.DomHelper(oldElement).first();
+        if (typeof currentElement === "string") currentElement = new EVUI.Modules.Dom.DomHelper(currentElement).first();
+
+        //both are the same element, no change
+        if (oldElement === currentElement) return false;
+
+        //make a document fragment to transfer the content to (or load it into the new state's document fragment if the new state's element is a document fragment)
+        var transferFrag = (session.bindingHandle.currentState.element.nodeType === Node.DOCUMENT_FRAGMENT_NODE) ? session.bindingHandle.currentState.element : document.createDocumentFragment();
+        var numContent = session.bindingHandle.oldState.boundContent?.length;
+        for (var x = 0; x < numContent; x++)
+        {
+            transferFrag.append(session.bindingHandle.oldState.boundContent[x]);
+        }
+
+        //if the transfer fragment is actually the element, we are done.
+        if (transferFrag === session.bindingHandle.currentState.element) return true;
+
+        //finally, inject the transfer fragment relative to or inside of the reference element
+        injectNode(session, session.bindingHandle.binding.insertionMode, currentElement, transferFrag); 
+
+        return true;
+    }
 
     /**Merges an old set of Nodes with a new set of Nodes to update the DOM to be in sync with the latest changes made to the Html derived from the source object and the htmlContent of the Binding.
     @param {BindingSession} session The session being executed.*/
@@ -3844,6 +3891,8 @@ EVUI.Modules.Binding.BindingController = function (services)
     @returns {Boolean}*/
     var shouldReBind = function (session)
     {
+
+
         //if (session.bindingHandle.oldState.htmlContent === session.bindingHandle.currentState.htmlContent) //can only re-bind if the html content is still the same
         //{
         if (session.bindingHandle.oldState.source === session.bindingHandle.currentState.source) //re-binding the same object
@@ -3885,6 +3934,11 @@ EVUI.Modules.Binding.BindingController = function (services)
             }
 
             if (session.bindingHandle.oldState.htmlContent !== session.bindingHandle.currentState.htmlContent) return true;
+            if (getValidElement(session.bindingHandle.oldState.element) != getValidElement(session.bindingHandle.currentState.element))
+            {
+                console.log("element changed");
+                return true;
+            }
 
             var numDiffs = session.observedDifferences.length;
             if (numDiffs === 0)
@@ -6192,7 +6246,7 @@ EVUI.Modules.Binding.BindingController = function (services)
     @returns {String|Element} */
     var getValidElement = function (value, mustBeElement)
     {
-        if (value instanceof DocumentFragment) return value;
+        if (value?.nodeType === Node.DOCUMENT_FRAGMENT_NODE) return value;
         if (mustBeElement !== true && typeof value === "string" && EVUI.Modules.Core.Utils.stringIsNullOrWhitespace(value) === false) return value;
         if (EVUI.Modules.Core.Utils.isElement(value) === true) return value;
 
@@ -7372,7 +7426,7 @@ EVUI.Modules.Binding.Binding = function (handle)
             if (value === _handle.currentState.element) return;
             if (_handle.progressState != EVUI.Modules.Binding.BindingProgressStateFlags.Idle) throw Error("Cannot change the element of a Binding that is queued or in progress.");
             if (_handle.wrapper.validateElement(value) === false) throw Error("Failed to set element - must be null, a non-whitespace string, a DocumentFragment, or an Element.");
-
+            if (_handle.currentState?.parentBindingHandle != null && _handle.currentState?.element != null) throw Error("Cannot re-assign the element of a child Binding.");
             if (_handle.newStateBound === true || _handle.pendingState != null)
             {
                 if (_handle.pendingState == null) _handle.pendingState = {};
