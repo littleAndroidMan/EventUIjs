@@ -2001,14 +2001,13 @@ EVUI.Modules.Core.Utils.getProperties = function (obj)
     {
         if (EVUI.Modules.Core.Utils.isArray(obj) === true) //if its an array, just make a list of all the indexes in the array rather than query the object for its properties (Object.Keys won't work in some situations for an array)
         {
-            var len = obj.length;
-
+            var len = obj.length;            
             var arrayProps = [];
             for (var x = 0; x < len; x++)
             {
                 arrayProps.push(x);
             }
-
+            
             return arrayProps;
         }
         else //some other sort of object that either has a constructor or a prototype that isn't Object.prototype
@@ -2095,6 +2094,10 @@ EVUI.Modules.Core.Utils.cacheProperties = function (obj, props)
         props = EVUI.Modules.Core.Utils.getProperties(obj);
         obj.constructor[EVUI.Modules.Core.Constants.Symbol_ObjectProperties] = props;
         return true;
+    }
+    else
+    {
+        obj.constructor[EVUI.Modules.Core.Constants.Symbol_ObjectProperties] = props;
     }
 
     return false;

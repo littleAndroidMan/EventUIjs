@@ -3891,8 +3891,6 @@ EVUI.Modules.Binding.BindingController = function (services)
     @returns {Boolean}*/
     var shouldReBind = function (session)
     {
-
-
         //if (session.bindingHandle.oldState.htmlContent === session.bindingHandle.currentState.htmlContent) //can only re-bind if the html content is still the same
         //{
         if (session.bindingHandle.oldState.source === session.bindingHandle.currentState.source) //re-binding the same object
@@ -3933,12 +3931,11 @@ EVUI.Modules.Binding.BindingController = function (services)
                 if (session.oldStateDictionary.haveChildrenChanged() === true) return true;
             }
 
+            //html content different, rebind
             if (session.bindingHandle.oldState.htmlContent !== session.bindingHandle.currentState.htmlContent) return true;
-            if (getValidElement(session.bindingHandle.oldState.element) != getValidElement(session.bindingHandle.currentState.element))
-            {
-                console.log("element changed");
-                return true;
-            }
+
+            //if we are a top-level binding and have had our element change, re-bind
+            if (session.bindingHandle.oldState.parentBindingHandle == null && getValidElement(session.bindingHandle.oldState.element) !== getValidElement(session.bindingHandle.currentState.element)) return true;
 
             var numDiffs = session.observedDifferences.length;
             if (numDiffs === 0)
