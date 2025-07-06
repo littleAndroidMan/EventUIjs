@@ -1066,6 +1066,58 @@ CoreTest.getFlagArgs = function* ()
     yield [name, flag, flagSet, action, result]
 };
 
+CoreTest.makeGetPropertyNamesArgs = function* ()
+{
+    var name = null;
+    var source = null;
+    var result = null;
+
+    name = "No Properties";
+    source = {};
+    result = [];
+    yield [name, source, result];
+
+    name = "Single Property";
+    source = { A: 1 };
+    result = ["A"];
+    yield [name, source, result];
+
+    name = "Multiple Properties";
+    source = { A: 1, B: 2, C: 3 };
+    result = ["A", "B", "C"];
+    yield [name, source, result];
+
+    name = "Nested Properties";
+    source = { A: { B: { C: 1 } } };
+    result = ["A"];
+
+    yield [name, source, result];
+
+    name = "Function Constructor Properties";
+    source = new CoreTest.BaseFunctionConstructorType();
+    result = ["property1", "property2"];
+
+    yield [name, source, result];
+
+    name = "Function Constructor Properties - Derived";
+    source = new CoreTest.DerviedFunctionConstructorType();
+    result = ["property1", "property2", "property3", "property4", "constructor"];
+
+    yield [name, source, result];
+
+    name = "Class Properties - Base";
+    source = new CoreTest.BaseClassExample();
+    result = ["property1", "property2"];
+
+    yield [name, source, result];
+
+    name = "Class Properties - Derived";
+    source = new CoreTest.DerivedClassExample();
+    result = ["property1", "property2", "property3", "property4"];
+
+    yield [name, source, result];
+};
+
 CoreTest.FlagAction =
 {
     None: "none",
@@ -1081,4 +1133,32 @@ CoreTest.FlagSet =
     SecondFlag: 2,
     ThirdFlag: 4,
     FourthFlag: 8
+};
+
+CoreTest.BaseFunctionConstructorType = function ()
+{
+    this.property1 = "abc";
+    this.property2 = "def";
+};
+
+CoreTest.DerviedFunctionConstructorType = function ()
+{
+    CoreTest.BaseFunctionConstructorType.call(this);
+    this.property3 = "ghi";
+    this.property4 = "jkl";
+};
+
+CoreTest.DerviedFunctionConstructorType.prototype = Object.create(CoreTest.BaseFunctionConstructorType.prototype);
+CoreTest.DerviedFunctionConstructorType.prototype.constructor = CoreTest.DerviedFunctionConstructorType;
+
+CoreTest.BaseClassExample = class
+{
+    property1 = "abc";
+    property2 = "def";
+};
+
+CoreTest.DerivedClassExample = class extends CoreTest.BaseClassExample
+{
+    property3 = "ghi";
+    property4 = "jkl";
 };

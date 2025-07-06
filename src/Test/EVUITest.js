@@ -1474,9 +1474,9 @@ EVUITest.Assertion = function (value, settings)
 
     /**Applies the "inheritance chain" of options to the user's options object so that all required properties are present, but the user's settings are maintained.
     @param {EVUITest.ValueCompareOptions} userOptions The options object made from the user's options parameter.
-    @param {EVUITest.ValueCompareOptions} requiredSettings The settings for the operation that are mandatory so that the comparer behaves correctly.
+    @param {EVUITest.ValueCompareOptions} defaultSettings The settings for the operation that are the default for the comparison type so that the comparer behaves correctly.
     @returns {EVUITest.ValueCompareOptions} */
-    var applyCompareSettingsInheritance = function (userOptions, requiredSettings)
+    var applyCompareSettingsInheritance = function (userOptions, defaultSettings)
     {
         var newOptions = {};
 
@@ -1492,13 +1492,10 @@ EVUITest.Assertion = function (value, settings)
             newOptions = extend(newOptions, _settings.compareOptions);
         }
 
-        //overwrite any required settings
-        if (requiredSettings != null)
+        //most general any default settings
+        if (defaultSettings != null)
         {
-            for (var prop in requiredSettings)
-            {
-                newOptions[prop] = requiredSettings[prop];
-            }
+            newOptions = extend(newOptions, defaultSettings);
         }
 
         return newOptions;
@@ -2477,7 +2474,7 @@ EVUITest.ValueComparer = function ()
             }
         }
 
-        var mismatched = false;
+        var valuesMatch = true;
 
         //for every key in the union dictionary, get the content arrays built above and see if they have the same length, 
         //which indicates that the same value or reference appeared the same number of times in the arrays then their contents are equivalent
@@ -2496,13 +2493,13 @@ EVUITest.ValueComparer = function ()
             {
                 if (aVals == null || bVals == null)
                 {
-                    mismatched = true;
+                    valuesMatch = false;
                     break;
                 }
 
                 if (aVals.length !== bVals.length)
                 {
-                    mismatched = true;
+                    valuesMatch = false;
                     break;
                 }
             }
@@ -2542,7 +2539,7 @@ EVUITest.ValueComparer = function ()
 
             if (matched === false)
             {
-                mismatched = true;
+                valuesMatch = false;
                 break;
             }
         }
@@ -2553,7 +2550,7 @@ EVUITest.ValueComparer = function ()
             delete taggedObjects[x][context.tagKey];
         }
 
-        return mismatched;
+        return valuesMatch;
     };
 
     /**Computes a "key" to use in a lookup dictionary of values when doing an array equivalence check.

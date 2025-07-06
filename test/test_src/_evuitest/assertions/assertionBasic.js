@@ -143,9 +143,11 @@ $evui.testHost.runAsync({
         testArgs.options.shouldFail = !valuesMatch;
         var result = null;
 
+        testArgs.outputWriter.logDebug("Comparing " + a.someFunction?.toString() + " to " + b.someFunction?.toString() + " with compareType: " + compareType);
+
         try
         {
-            result = $evui.assert(a, { functionCompareType: compareType }).isEquivalentTo(b);
+            result = $evui.assert(a).isEquivalentTo(b, { functionCompareType: compareType });
             testArgs.outputWriter.logInfo(result.message);
         }
         catch (ex)
