@@ -49,7 +49,7 @@ EVUIUnit.TestRunner = class
     }
 
     /**Writes output to the parent iframe in the form of a message or logs a message to the console if not running in an iframe.
-    @param {String|EVUITest.OutputWiterMessage} output The ooutput to send or log.
+    @param {String|EVUITest.OutputWiterMessage} output The output to send or log.
     @param {any} outputLevel The LogLevel enum value indicating the importance of the msaage being logged.*/
     writeOutput(output, outputLevel)
     {
@@ -95,7 +95,7 @@ EVUIUnit.TestRunner = class
         window.parent.postMessage(pushMessage);
     }
 
-    /**Runs the test file by stuffing it into a new scipt tag and exeucting it within a function wrapper.*/
+    /**Runs the test file by stuffing it into a new script tag and executing it within a function wrapper.*/
     async run()
     {
         if (this.#testRunning === true) return;

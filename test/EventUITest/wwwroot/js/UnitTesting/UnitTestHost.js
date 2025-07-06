@@ -7,7 +7,7 @@ LICENSE file in the root directory of this source tree.*/
 @class*/
 EVUIUnit.HostController = class
 {
-    /**ID couinter for TestSessions run by this host.
+    /**ID counter for TestSessions run by this host.
     @type {Number}*/
     #testSessionID = 0;
 
@@ -30,7 +30,7 @@ EVUIUnit.HostController = class
     @type {Number}*/
     Timeout = 10;
 
-    /**Initializes the controller with the arugments it will run and the root element under which the required child elements can be found.
+    /**Initializes the controller with the arguments it will run and the root element under which the required child elements can be found.
     @param {EVUIUnit.TestHostServerArgs} serverArgs The arguments as to what tests will be run.
     @param {Element} rootElement The root element to search under for the other elements used by the host.*/
     initialize(serverArgs, rootElement)
@@ -72,7 +72,7 @@ EVUIUnit.HostController = class
         });
     }
 
-    /**Writes a messager to the output element.
+    /**Writes a message to the output element.
     @param {String} message The message to log.
     @param {String} logLevel  A value from the EVUITest.LogLevel indicating the severity of the log message.*/
     writeMessage(message, logLevel)
@@ -206,7 +206,7 @@ EVUIUnit.HostController = class
         return newArgs;
     }
 
-    /**Builds the iframe. Points it at the right URL and hooks upp the message handlers.
+    /**Builds the iframe. Points it at the right URL and hooks up the message handlers.
     @param {$TestSession} session The test session to build the iframe for.*/
     #attachIFrame(session)
     {
@@ -223,7 +223,7 @@ EVUIUnit.HostController = class
         session.logHandler = onMessageHandler;
     };
 
-    /**Takes a message event from an iframe and takes the appropraite action.
+    /**Takes a message event from an iframe and takes the appropriate action.
      * 
      * @param {#TestSession} session The session whose messages are being handled.
      * @param {MessageEvent} messageEventArgs The event args produced by the window when it received this message.
@@ -249,7 +249,7 @@ EVUIUnit.HostController = class
             this.#setTimeout(session);
             this.#writeMessageOutput(session, message.message);
         }
-        else if (message.messageCode === EVUIUnit.MessageCodes.TestComplete) //test all done, collect rhe results, clear the timeout, and finish the job
+        else if (message.messageCode === EVUIUnit.MessageCodes.TestComplete) //test all done, collect the results, clear the timeout, and finish the job
         {
             session.lastStatusUpdateAt = Date.now();
             session.results = message.testResults;
@@ -336,7 +336,7 @@ EVUIUnit.HostController = class
         @type {IFrameElement}*/
         iframe = null;
 
-        /**Boolean. Whether or not an error in this file consititutes a critical failure that should stop the testing process.
+        /**Boolean. Whether or not an error in this file constitutes a critical failure that should stop the testing process.
         @type {Boolean}*/
         isCritical = false;
 
@@ -382,7 +382,7 @@ EVUIUnit.HostController = class
     }
 };
 
-/**The arugments passed into the host telling it what files to run.
+/**The arguments passed into the host telling it what files to run.
 @class*/
 EVUIUnit.TestHostServerArgs = class
 {
@@ -415,7 +415,7 @@ EVUIUnit.TestHostFileResults = class
     @type {Boolean}*/
     timedOut = false;
 
-    /**Number. THe numbner of milliseconds that elapsed during the test.
+    /**Number. The number of milliseconds that elapsed during the test.
     @type {Number}*/
     duration = 0;
 
