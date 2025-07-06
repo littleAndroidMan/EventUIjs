@@ -1472,7 +1472,7 @@ EVUITest.Assertion = function (value, settings)
         return assertionSettings;
     };
 
-    /**Applies the "inheritance chain" of options to the user's options object so that all required properties are present, but the user's settings are maintained.
+    /**Applies the "inheritance chain" of options to the user's options object so that default properties are present, but the user's settings are maintained.
     @param {EVUITest.ValueCompareOptions} userOptions The options object made from the user's options parameter.
     @param {EVUITest.ValueCompareOptions} defaultSettings The settings for the operation that are the default for the comparison type so that the comparer behaves correctly.
     @returns {EVUITest.ValueCompareOptions} */
@@ -1492,7 +1492,7 @@ EVUITest.Assertion = function (value, settings)
             newOptions = extend(newOptions, _settings.compareOptions);
         }
 
-        //most general any default settings
+        //most general - any default settings
         if (defaultSettings != null)
         {
             newOptions = extend(newOptions, defaultSettings);
