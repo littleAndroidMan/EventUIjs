@@ -1192,7 +1192,7 @@ EVUI.Modules.Core.Utils.getValuePathSegments = function (propertyPath)
     //match any character that can be used as a property separator in a string property path: ".", "[", "]" and "?"
     var deliminiterRegex = /\[|\]|\.|\?/;
 
-    //match any quote characters so signal the beginning of a literal string
+    //match any quote characters to signal the beginning of a literal string
     var quoteRegex = /"|'|`/;
 
     //see if there's any match at all in the path for either a delineator or a literal text span beginner
@@ -1205,7 +1205,9 @@ EVUI.Modules.Core.Utils.getValuePathSegments = function (propertyPath)
         return [propertyPath];
     }
 
-    //if so, walk the string and compose a path made from the non-delineating characters
+    //if so, walk the string and compose a path made from the non-delineating characters. Seems like overkill, but we do this instead of simply splitting based
+    //on "." because paths can use the optional chaining operator (?), bracket notation, or segments wrapped in quotes that can also contain
+    //any possible string, including those with delineating characters in them
     var len = propertyPath.length;
     var curSeg = "";
     var inLiteral = false;
@@ -1216,22 +1218,22 @@ EVUI.Modules.Core.Utils.getValuePathSegments = function (propertyPath)
         var curChar = propertyPath[index];
         var wasInLiteral = inLiteral;
 
-        //check to see if we are in a 'literal' string - that is a run of text between two matching quote-type characters. 
-        if (quoteRegex.test(curChar) === true)
+        //check to see if we are in a 'literal' string - that is a run of text between two matching quote-type characters or a bracket. 
+        if (quoteRegex.test(curChar) === true || (curChar === "[" && curSeg.length === 0) || curChar === "]")
         {
             if (inLiteral === false) //not in a literal run of text - see if its an escaped quote
             {
-                if (index === 0 || propertyPath[index - 1] !== "\\") //if not, we are at the beginning of a literal text run
+                if ((index === 0 || propertyPath[index - 1] !== "\\") && curChar !== "]") //if not, we are at the beginning of a literal text run
                 {
                     inLiteral = true;
                     literalStartCharacter = curChar;
                 }
             }
-            else //in a literal run of text. See if this is an un-escaped matching quote character to end the 
+            else //in a literal run of text. See if this is an un-escaped matching quote character to end the run
             {
-                if (curChar === literalStartCharacter)
+                if (curChar === literalStartCharacter || (literalStartCharacter === "[" && curChar === "]"))
                 {
-                    if (index > 0 && propertyPath[index - 1] !== "\\")
+                    if (index > 0 && propertyPath[index - 1] !== "\\" )
                     {
                         inLiteral = false;
                     }
@@ -1371,7 +1373,6 @@ EVUI.Modules.Core.Utils.isObject = function (o)
 {
     return typeof o === "object" && o != null;
 };
-
 
 /**Determines whether or not an value is a valid non-null object.
 @param {Object} o The object to test.
@@ -1766,7 +1767,7 @@ EVUI.Modules.Core.Utils.getValidElement = function (element)
         if (EVUI.Modules.Core.Utils.isElement(element[0]) === true) return element[0];
     }
 
-    if (EVUI.Modules.Core.Utils.IsDomHelper(element) == true)
+    if (EVUI.Modules.Core.Utils.isDomHelper(element) == true)
     {
         if (element.elements.length > 0 && EVUI.Modules.Core.Utils.isElement(element.elements[0]) === true) return element.elements[0];
     }    

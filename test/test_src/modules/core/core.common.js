@@ -863,6 +863,12 @@ CoreTest.makeGetPathSegmentsArgs = function* ()
     result = ["A", "[B.12[3]", "\\\"C"]
 
     yield [name, path, result];
+
+    name = "Deep Path - With Bracketed Decimals - 3";
+    path = "[A].[3.14]";
+    result = ["A", "3.14"];
+
+    yield [name, path, result];
 };
 
 CoreTest.makeGetElementAttributesArgs = function* ()
