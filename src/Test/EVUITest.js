@@ -2487,7 +2487,7 @@ EVUITest.ValueComparer = function ()
             var aVals = contentADic[curKey];
             var bVals = contentBDic[curKey];
 
-            var isObject = curKey.indexOf("object-") === 0;
+            var isObject = curKey.indexOf("ref-") === 0;
 
             if (isObject === false) //not an object, we have a mismatch if either list is missing or if their lengths don't match
             {
