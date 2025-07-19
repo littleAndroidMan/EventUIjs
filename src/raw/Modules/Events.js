@@ -183,15 +183,40 @@ EVUI.Modules.Events.EventManager = function ()
     /**Calls all the event listeners with the given name.
     @param {EVUI.Modules.Events.EventTriggerArgs|String} eventNameOrTriggerArgs Either a YOLO EventTriggerArgs object or the name of the event to trigger.
     @param {Any} data Any data to pass to the events being triggered.
-    @param {String} triggerName The name to give the trigger for tracing purposes.*/
-    this.trigger = function (eventNameOrTriggerArgs, data, triggerName)
+    @param {String|Function} triggerName The name to give the trigger for tracing purposes or a callback function.
+    @param {Function} callback A callback function that is called once the eventing process is finished or terminated.*/
+    this.trigger = function (eventNameOrTriggerArgs, data, triggerName, callback)
     {
+        if (typeof triggerName === "function")
+        {
+            callback = triggerName;
+            triggerName = null;
+        }
+
+        if (typeof callback !== "function") callback = function () { };
+
         var triggerArgs = toTriggerArgs(eventNameOrTriggerArgs, data, triggerName);
 
-        var session = buildEventSession(triggerArgs, SessionMode.Trigger);
+        var session = buildEventSession(triggerArgs, SessionMode.Trigger, callback);
         if (session == null) return;
 
         launchEvent(session);
+    };
+
+    /**Awaitable. Calls all the event listeners with the given name.
+    @param {EVUI.Modules.Events.EventTriggerArgs|String} eventNameOrTriggerArgs Either a YOLO EventTriggerArgs object or the name of the event to trigger.
+    @param {Any} data Any data to pass to the events being triggered.
+    @param {String} triggerName The name to give the trigger for tracing purposes.
+    @returns {Promise}*/
+    this.triggerAsync = function (eventNameOrTriggerArgs, data, triggerName)
+    {
+        return new Promise(function (resolve)
+        {
+            _self.trigger(eventNameOrTriggerArgs, data, triggerName, function ()
+            {
+                resolve();
+            });
+        });
     };
 
     /**Calls all the event listeners with the given name and collects their responses and passes them into the callback function.
@@ -305,7 +330,7 @@ EVUI.Modules.Events.EventManager = function ()
         {
             triggerArgs.eventName = eventNameOrTriggerArgs;
             triggerArgs.data = data;
-            triggerArgs.triggerName = triggerName;
+            triggerArgs.triggerName = triggerName?.toString();
         }
         else if (typeof eventNameOrTriggerArgs === "object")
         {
@@ -335,7 +360,7 @@ EVUI.Modules.Events.EventManager = function ()
         session.callback = callback;
 
         var listeners = getListeners(triggerArgs.eventName);
-        if (listeners == null || listeners.length === 0) return null;
+        if (listeners == null || listeners.length === 0) listeners = [];
 
         listeners = listeners.sort(function (listener1, listener2)
         {
@@ -391,8 +416,7 @@ EVUI.Modules.Events.EventManager = function ()
                     if (eventStreamArgs.resume() === true)
                     {
                         registerAnswer(session, eventManagerArgs.listener, answer, true);
-                    }
-                    
+                    }                    
                 };
             }
 
@@ -418,33 +442,30 @@ EVUI.Modules.Events.EventManager = function ()
             addEvent(es, session, x);
         }
 
-        if (session.mode === SessionMode.Ask)
-        {
-            es.addStep({
-                key: "complete",
-                name: "onComplete",
-                type: EVUI.Modules.EventStream.EventStreamStepType.Job,
-                handler: function (args)
+        es.addStep({
+            key: "complete",
+            name: "onComplete",
+            type: EVUI.Modules.EventStream.EventStreamStepType.Job,
+            handler: function (args)
+            {
+                if (typeof session.callback === "function")
                 {
-                    if (typeof session.callback === "function")
+                    var exeArgs = new EVUI.Modules.Core.AsyncSequenceExecutionArgs();
+                    exeArgs.functions = session.callback;
+                    if (session.mode === SessionMode.Ask) exeArgs.parameter = session.askResults;
+
+                    EVUI.Modules.Core.AsyncSequenceExecutor.execute(exeArgs, function (error)
                     {
-                        var exeArgs = new EVUI.Modules.Core.AsyncSequenceExecutionArgs();
-                        exeArgs.functions = session.callback;
-                        exeArgs.parameter = session.askResults;
-
-                        EVUI.Modules.Core.AsyncSequenceExecutor.execute(exeArgs, function (error)
+                        if (error != null && error.length > 0)
                         {
-                            if (error != null && error.length > 0)
-                            {
-                                throw error[0];
-                            }
+                            throw error[0];
+                        }
 
-                            args.resolve();
-                        });
-                    }
+                        args.resolve();
+                    });
                 }
-            });
-        }
+            }
+        });        
 
         return es;
     };
@@ -796,10 +817,21 @@ $evui.off = function (eventNameOrID, handler)
 /**Calls all the event listeners with the given name.
 @param {EVUI.Modules.Events.EventTriggerArgs|String} eventNameOrTriggerArgs Either a YOLO EventTriggerArgs object or the name of the event to trigger.
 @param {Any} data Any data to pass to the events being triggered.
-@param {String} triggerName The name to give the trigger for tracing purposes.*/
-$evui.trigger = function (eventNameOrTriggerArgs, data, triggerName)
+@param {String|Function} triggerName The name to give the trigger for tracing purposes or a callback function.
+@param {Function} callback A callback function to call once all event handlers have been triggered or skipped.*/
+$evui.trigger = function (eventNameOrTriggerArgs, data, triggerName, callback)
 {
-    return $evui.events.trigger(eventNameOrTriggerArgs, data, triggerName);
+    return $evui.events.trigger(eventNameOrTriggerArgs, data, triggerName, callback);
+};
+
+/**Awaitable. Calls all the event listeners with the given name.
+@param {EVUI.Modules.Events.EventTriggerArgs|String} eventNameOrTriggerArgs Either a YOLO EventTriggerArgs object or the name of the event to trigger.
+@param {Any} data Any data to pass to the events being triggered.
+@param {String} triggerName The name to give the trigger for tracing purposes.
+@returns {Promise}*/
+$evui.triggerAsync = function (eventNameOrTriggerArgs, data, triggerName)
+{
+    return $evui.events.triggerAsync(eventNameOrTriggerArgs, data, triggerName);
 }
 
 /**Calls all the event listeners with the given name and collects their responses and passes them into the callback function.
