@@ -994,33 +994,31 @@ EVUI.Modules.Core.DeepExtendContext = function (context)
     });
 };
 
+/**Gets the value become compared from the current source object of the deep extend context.
+@returns {Any}*/
 EVUI.Modules.Core.DeepExtendContext.prototype.getSourceValue = function ()
 {
+    //this function exists to be 'symmetrical' with the getTargetValue function.
     return this.value;
 };
 
+/**Gets the value of the target object at the current property path of the deep extend context.
+@returns {Any}*/
 EVUI.Modules.Core.DeepExtendContext.prototype.getTargetValue = function ()
 {
     return EVUI.Modules.Core.Utils.getValue(this.propertyName, this.target);
 };
 
+/**Gets the source parent object of the value being extended.
+@returns {Object}*/
 EVUI.Modules.Core.DeepExtendContext.prototype.getSourceParent = function ()
 {
-    var pathSegments = EVUI.Modules.Core.Utils.getValuePathSegments(this.propertyPath);
-    var numSegs = pathSegments.length;
-
-    var parent = this.rootSource;
-    for (var x = 0; x < numSegs - 1; x++)
-    {        
-        var newParent = parent[pathSegments[x]];
-        if (newParent == null) break;
-
-        parent = newParent;
-    }
-
-    return parent;
+    //this function exists to be 'symmetrical' with the getTargetParent function.
+    return this.source;
 };
 
+/**Gets the target parent object of the value being extended.
+@returns {Object}*/
 EVUI.Modules.Core.DeepExtendContext.prototype.getTargetParent = function ()
 {
     var pathSegments = EVUI.Modules.Core.Utils.getValuePathSegments(this.propertyPath);
@@ -1603,7 +1601,6 @@ EVUI.Modules.Core.Utils.isjQuery = function (object)
     return false;
 };
 
-
 /**Checks to see if an object is derived from an Element-derived object.
 @param {Object} object The object to check.
 @returns {Boolean}*/
@@ -1621,7 +1618,6 @@ $evui.isElement = function (object)
     return EVUI.Modules.Core.Utils.isElement(object);
 };
 
-
 /**Determines whether one element contains another.
 @param {Element} childElement The element that is contained by the parent element.
 @param {Element} parentElement The element that contains the child element.
@@ -1630,7 +1626,7 @@ EVUI.Modules.Core.Utils.containsElement = function (childElement, parentElement)
 {
     if (EVUI.Modules.Core.Utils.isjQuery(childElement) === true) childElement = childElement[0];
     if (EVUI.Modules.Core.Utils.isDomHelper(childElement) === true) childElement = childElement.elements[0];
-    if (childElement instanceof Node === false) return false; //not a DOM node, not contained by the parent
+    if (typeof childElement?.nodeType !== "number" || childElement instanceof Node === false) return false; //not a DOM node, not contained by the parent
     if (childElement.parentElement == null)
     {
         return false;
@@ -1638,7 +1634,7 @@ EVUI.Modules.Core.Utils.containsElement = function (childElement, parentElement)
 
     if (EVUI.Modules.Core.Utils.isjQuery(parentElement) === true) parentElement = parentElement[0];
     if (EVUI.Modules.Core.Utils.isDomHelper(parentElement) === true) parentElement = parentElement.elements[0];
-    if (parentElement instanceof Node === false) return false;
+    if (typeof parentElement?.nodeType !== "number" || parentElement instanceof Node === false) return false;
 
     return parentElement.contains(childElement);
 };
@@ -1770,13 +1766,10 @@ EVUI.Modules.Core.Utils.getValidElement = function (element)
         if (EVUI.Modules.Core.Utils.isElement(element[0]) === true) return element[0];
     }
 
-    if (EVUI.Modules.Dom != null)
+    if (EVUI.Modules.Core.Utils.IsDomHelper(element) == true)
     {
-        if (element instanceof EVUI.Modules.Dom.DomHelper)
-        {
-            if (element.elements.length > 0 && EVUI.Modules.Core.Utils.isElement(element.elements[0]) === true) return element.elements[0];
-        }
-    }
+        if (element.elements.length > 0 && EVUI.Modules.Core.Utils.isElement(element.elements[0]) === true) return element.elements[0];
+    }    
 
     return null;
 };
@@ -1789,7 +1782,7 @@ EVUI.Modules.Core.Utils.isDomHelper = function (domHelper)
     return (EVUI.Modules.Dom != null && domHelper instanceof EVUI.Modules.Dom.DomHelper);
 };
 
-/**Determines if a required dependency is present.
+/**Determines if a required EventUI dependency is present.
  @param {String} moduleName The name of the required module.
  @param {String} minVersion The minimum version of the module required.*/
 EVUI.Modules.Core.Utils.require = function (moduleName, message)
@@ -1797,7 +1790,7 @@ EVUI.Modules.Core.Utils.require = function (moduleName, message)
     if (EVUI.Modules[moduleName] == null) throw Error("Dependency missing: Module EVUI.Modules." + moduleName + " is required." + ((EVUI.Modules.Core.Utils.stringIsNullOrWhitespace(message) === false) ? " " + message : ""));
 };
 
-/**Determines if all the required dependencies for a module are present.
+/**Determines if all the required EventUI dependencies for a module are present.
 @param {Object} dependencies The Dependencies property of a Module.*/
 EVUI.Modules.Core.Utils.requireAll = function (dependencies)
 {
@@ -1815,7 +1808,6 @@ EVUI.Modules.Core.Utils.requireAll = function (dependencies)
     dependencies.checked = true;
 };
 
-
 /**Determines if an object was constructed using the given (native) constructor. Performs cross-window constructor checks in addition to simple instanceof checks.
  @param {Any} obj The object to test.
  @param {Function} ctor The constructor to test against.
@@ -1824,9 +1816,9 @@ EVUI.Modules.Core.Utils.instanceOf = function (obj, ctor)
 {
     if (obj == null || typeof ctor !== "function") return false;
     if (obj instanceof ctor) return true;
-    if (EVUI.Modules.Core.Utils.stringIsNullOrWhitespace(ctor.name) === true || ctor.name.toLowerCase() === "object") return false;
+    if (EVUI.Modules.Core.Utils.stringIsNullOrWhitespace(ctor.name) === true || ctor.name.toLowerCase() === "object") return false; //object has no constructor and is a plain object, so a instanceof check here is useless and a cross-window check will yield false positives
 
-    if ("[object " + ctor.name + "]" === Object.prototype.toString.call(obj)) return true;
+    if ("[object " + ctor.name + "]" === Object.prototype.toString.call(obj)) return true; //cross-window check
     return false;
 };
 
@@ -1839,7 +1831,7 @@ $evui.instanceOf = function (obj, ctor)
     return EVUI.Modules.Core.Utils.instanceOf(obj, ctor);
 };
 
-/**Returns a hash that uniquely identifies a string.
+/**Returns a hash that uniquely identifies a string. Meant only for unique identification of a string in a single application session, not for cryptography or security.
 @param {String} str A string to turn into a hash code.
 @returns {Number}*/
 EVUI.Modules.Core.Utils.getHashCode = function (str)
@@ -1940,7 +1932,7 @@ EVUI.Modules.Core.Utils.getHashCode = function (str)
     return final;
 }
 
-/**Returns a hash that uniquely identifies a string.
+/**Returns a hash that uniquely identifies a string. Meant only for unique identification of a string in a single application session, not for cryptography or security.
 @param {String} str A string to turn into a hash code.
 @returns {String}*/
 $evui.getHashCode = function (str)
