@@ -44,6 +44,35 @@ $evui.testAsync({
 });
 
 $evui.testAsync({
+    name: "Events - Multiple Event Listeners - Stop Propagation",
+    test: async function (testArgs)
+    {
+        var eventName = $evui.guid();
+        var hitCount = 0;
+
+        $evui.on(eventName, function (args)
+        {
+            args.stopPropagation();
+            hitCount++;
+        });
+
+        $evui.on(eventName, async function (args)
+        {
+            await $evui.waitAsync(25);
+            hitCount++;
+        });
+
+        $evui.on(eventName, function (args)
+        {
+            hitCount++;
+        });
+
+        await $evui.triggerAsync(eventName);
+        $evui.assert(hitCount).is(1);
+    }
+});
+
+$evui.testAsync({
     name: "Events - Event Triggering with Data",
     test: async function (testArgs)
     {
@@ -67,16 +96,21 @@ $evui.testAsync({
     {
         var eventName = $evui.guid();
         var order = [];
-        $evui.on(eventName, function (args)
+        $evui.on(eventName, async function (args)
         {
+            await $evui.waitAsync(50);
             order.push(1);
         }, 3);
-        $evui.on(eventName, function (args)
+
+        $evui.on(eventName, async function (args)
         {
+            await $evui.waitAsync(15);
             order.push(3);
         }, 1);
-        $evui.on(eventName, function (args)
+
+        $evui.on(eventName, async function (args)
         {
+            await $evui.waitAsync(25);
             order.push(2);
         }, 2);
 
@@ -156,4 +190,4 @@ $evui.testAsync({
 
         $evui.assert(hitCount).is(3);
     }
-})
+});
